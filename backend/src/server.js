@@ -2,7 +2,7 @@ const passwordsRoutes = require("./routes/passwords");
 const authRoutes = require("./routes/authRoutes");
 const users = require("./routes/users");
 const express = require("express");
-const connectDB = require("./db");
+const connectDB = require("./config/db");
 const cors = require("cors");
 
 require("dotenv").config();
@@ -18,6 +18,8 @@ app.use(express.json());
 app.use("/api/passwords", passwordsRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/users", users);
+
+app.use("/");
 
 const PORT = process.env.PORT;
 app.listen(PORT, () => {
