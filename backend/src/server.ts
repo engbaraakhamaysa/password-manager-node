@@ -1,6 +1,8 @@
 import express, { Request, Response } from "express";
 import { connectDB } from "./config/db.js";
 import userRoutes from "./routes/user.routes.js";
+import authRoutes from "./routes/auth.routes.js";
+import passwordRoutes from "./routes/password.routes.js";
 
 import dotenv from "dotenv";
 
@@ -23,6 +25,8 @@ app.get("/", (req: Request, res: Response) => {
 });
 
 app.use("/api/users", userRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/password", passwordRoutes);
 
 app.listen(process.env.PORT, () => {
   console.log(`Server running on port ${process.env.PORT}`);
