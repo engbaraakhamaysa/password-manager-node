@@ -1,42 +1,89 @@
 import { useState } from "react";
-import axios from "axios";
 import Header from "../Components/Header";
+import { authService } from "../services/authServices";
+import { useNavigate } from "react-router-dom";
 
 export default function SignUp() {
-  // useState with name,email,pass & passR to post data to severe in whith form and save new user in db
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [passwordR, setPasswordR] = useState("");
-  // use emailError to respons data in the sever any error with email or pass
+  // ==========================================================
+  // React Hooks (useState)
+  // Store and update component state
+  // ==========================================================
+
+  // Store all form fields inside one object
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+    passwordR: "",
+  });
+
+  // Store error messages returned from the server
   const [errorMsg, setErrorMsg] = useState("");
-  // accept tracking the user click the submint to show errors if found
+
+  // Track whether the user has submitted the form
+  // Used to display validation messages only after submit
   const [accept, setAccept] = useState(false);
 
+  // ==========================================================
+  // React Router (useNavigate)
+  // Used for navigation without reloading the page
+  // ==========================================================
+
+  const navigate = useNavigate();
+
+  // ==========================================================
+  // Event Handler
+  // Handles form submission
+  // ==========================================================
+
   const handleSubmit = async (e) => {
-    e.preventDefault(); //Page reload is prohibited.
+    // Prevent page refresh
+    e.preventDefault();
+
+    // Enable validation messages
     setAccept(true);
+
+    // Clear previous server error
     setErrorMsg("");
 
-    //Verify data before submitting
+    // ==========================================================
+    // Client-side Validation
+    // Verify input before sending request
+    // ==========================================================
+
     const isValid =
-      name.trim() !== "" && password.length >= 8 && password === passwordR;
+      form.name.trim() !== "" &&
+      form.password.length >= 8 &&
+      form.password === form.passwordR;
+
+    // Stop execution if validation fails
     if (!isValid) return;
-    //Send the request  name , email , pass , pass confirmation with post to the server
+
+    // ==========================================================
+    // API Call (Async / Await)
+    // Send registration data to the backend
+    // ==========================================================
+
     try {
-      const res = await axios.post("http://localhost:8000/api/auth/register", {
-        name,
-        email,
-        password,
-        password_confirmation: passwordR,
+      const res = await authService.register({
+        name: form.name,
+        email: form.email,
+        password: form.password,
       });
-      //chiek the responts in the server and print error if found
-      if (res.status === 200) {
-        alert("Registration successful!");
-        localStorage.setItem("email", email);
-        window.location.pathname = "/";
-      }
+
+      // Registration successful
+      console.log(res);
+      navigate("/");
+
+      // alert("Registration successful!");
+      // localStorage.setItem("token", res.data.token);
+      // window.location.pathname = "/";
     } catch (err) {
+      // ==========================================================
+      // Error Handling
+      // Display different messages based on server response
+      // ==========================================================
+
       if (err.response?.status === 422) {
         setErrorMsg("Email is already in use.");
       } else if (err.response?.status === 400) {
@@ -47,55 +94,93 @@ export default function SignUp() {
     }
   };
 
+  // ==========================================================
+  // JSX
+  // UI returned by the component
+  // ==========================================================
+
   return (
     <div>
       <Header />
+
       <div className="auth-container">
+        {/* Form submission is handled by React */}
         <form onSubmit={handleSubmit} className="auth-form">
           <h2 className="auth-header">Register</h2>
 
+          {/* Controlled Input (Name) */}
           <input
             type="text"
             placeholder="Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            value={form.name}
+            onChange={(e) =>
+              setForm({
+                ...form,
+                name: e.target.value,
+              })
+            }
             className="auth-input"
           />
-          {accept && name.trim() === "" && (
+
+          {/* Conditional Rendering */}
+          {accept && form.name.trim() === "" && (
             <p className="auth-error">Name is required</p>
           )}
 
+          {/* Controlled Input (Email) */}
           <input
             type="email"
             placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            value={form.email}
+            onChange={(e) =>
+              setForm({
+                ...form,
+                email: e.target.value,
+              })
+            }
             className="auth-input"
             required
           />
 
+          {/* Controlled Input (Password) */}
           <input
             type="password"
             placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            value={form.password}
+            onChange={(e) =>
+              setForm({
+                ...form,
+                password: e.target.value,
+              })
+            }
             className="auth-input"
           />
-          {accept && password.length < 8 && (
+
+          {/* Conditional Rendering */}
+          {accept && form.password.length < 8 && (
             <p className="auth-error">Password must be at least 8 characters</p>
           )}
 
+          {/* Controlled Input (Confirm Password) */}
           <input
             type="password"
             placeholder="Confirm Password"
-            value={passwordR}
-            onChange={(e) => setPasswordR(e.target.value)}
+            value={form.passwordR}
+            onChange={(e) =>
+              setForm({
+                ...form,
+                passwordR: e.target.value,
+              })
+            }
             className="auth-input"
           />
-          {accept && password !== passwordR && (
+
+          {/* Conditional Rendering */}
+          {accept && form.password !== form.passwordR && (
             <p className="auth-error">Passwords do not match</p>
           )}
 
+          {/* Display server error message */}
           {errorMsg && <p className="auth-error">{errorMsg}</p>}
 
           <button type="submit" className="auth-button">

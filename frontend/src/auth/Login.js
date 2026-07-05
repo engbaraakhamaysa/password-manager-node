@@ -1,50 +1,116 @@
 import { useState } from "react";
-import axios from "axios";
 import Header from "../Components/Header";
+import { authService } from "../services/authServices";
+import { useNavigate } from "react-router-dom";
+import { jwtDecode } from "jwt-decode";
 
 export default function Login() {
-  //Use useState to email , password to post to sevrer date
+  // ==========================================================
+  // React Hooks (useState)
+  // Store and update component state
+  // ==========================================================
+
+  // Store user email
   const [email, setEmail] = useState("");
+
+  // Store user password
   const [password, setPassword] = useState("");
-  // use emailError to respons data in the sever any error with email
+
+  // Store server error status (401, 400, ...)
   const [emailError, setEmailError] = useState(null);
-  // accept tracking the user click the submint to show errors if found
+
+  // Track whether the user has submitted the form
+  // Used to display validation messages only after submit
   const [accept, setAccept] = useState(false);
 
+  // ==========================================================
+  // React Router (useNavigate)
+  // Used for navigation without reloading the page
+  // ==========================================================
+
+  const navigate = useNavigate();
+
+  // ==========================================================
+  // Event Handler
+  // Handles form submission
+  // ==========================================================
+
   async function Submit(e) {
-    e.preventDefault(); //Prevent page reload
+    // Prevent page refresh after submitting the form
+    e.preventDefault();
+
+    // Enable validation messages
     setAccept(true);
+
+    // Clear previous server error
     setEmailError(null);
-    //stop fun if passord less then 8 numbers or char
+
+    // Stop execution if password is too short
     if (password.length < 8) return;
 
-    //Send data to the server use post
+    // ==========================================================
+    // API Call (Async / Await)
+    // Send login request to the backend
+    // ==========================================================
+
     try {
-      const res = await axios.post("http://localhost:8000/api/auth/login", {
+      const res = await authService.login({
         email,
         password,
       });
 
-      //If login is successful, the email & userId is saved to localStorage, and the user is directed to the home page.
-      if (res.status === 200) {
-        window.localStorage.setItem("userId", res.data.userId);
-        window.localStorage.setItem("email", email);
-        window.localStorage.setItem("isAdmin", res.data.isAdmin);
-        window.location.pathname = "/";
+      console.log(res);
+
+      // ==========================================================
+      // Browser Local Storage
+      // Save JWT token after successful login
+      // ==========================================================
+
+      window.localStorage.setItem("token", res.data);
+
+      // ==========================================================
+      // React Router Navigation
+      // Redirect user without reloading the application
+      // ==========================================================
+      const token = localStorage.getItem("token");
+
+      const decoded = jwtDecode(token);
+
+      console.log(decoded);
+
+      if (decoded.role === "admin") {
+        navigate("/admin");
+      } else if (decoded.role === "user") {
+        navigate("/user");
+      } else {
+        navigate("/");
       }
-      //If login fails, an error code (e.g. 401 or 400) is stored.
+      // If login fails, an error code (401, 400, ...) is returned
     } catch (err) {
-      setEmailError(err.response?.status);
+      // ==========================================================
+      // Error Handling
+      // Save server status code to display an error message
+      // ==========================================================
+
+      setEmailError(err.res.status);
     }
   }
+
+  // ==========================================================
+  // JSX
+  // UI returned by the component
+  // ==========================================================
 
   return (
     <div>
       <Header />
+
       <div className="auth-container">
+        {/* Form submission is handled by React */}
         <form onSubmit={Submit} className="auth-form">
           <h2 className="auth-header">Login</h2>
 
+          {/* Controlled Input (Email) */}
           <input
             type="text"
             placeholder="Email"
@@ -54,10 +120,12 @@ export default function Login() {
             className="auth-input"
           />
 
+          {/* Conditional Rendering */}
           {accept && (emailError === 401 || emailError === 400) && (
             <p className="auth-error">Incorrect email or password</p>
           )}
 
+          {/* Controlled Input (Password) */}
           <input
             type="password"
             placeholder="Password"
@@ -66,6 +134,7 @@ export default function Login() {
             className="auth-input"
           />
 
+          {/* Conditional Rendering */}
           {password.length < 8 && accept && (
             <p className="auth-error">
               Password must be more than 8 characters
