@@ -1,30 +1,41 @@
-import { User } from "../models/User";
 import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
 
-// Create User Endpoint
+import { User } from "../models/User";
+import { generateToken } from "../helpers/generateToken";
+
+// ==========================================================
+// Register User
+// Creates a new user account
+// Returns JWT token after successful registration
+// ==========================================================
 export const register = async (
   req: Request,
   res: Response,
 ): Promise<Response> => {
   const { name, email, password, role } = req.body;
 
-  // Required fields
+  // ==========================================================
+  // Required Fields Validation
+  // ==========================================================
   if (!name || !email || !password) {
     return res.status(400).json({
       message: "Name, email and password are required",
     });
   }
 
-  // Name validation
+  // ==========================================================
+  // Name Validation
+  // ==========================================================
   if (name.trim().length < 3) {
     return res.status(400).json({
       message: "Name must be at least 3 characters",
     });
   }
 
-  // Email validation
+  // ==========================================================
+  // Email Validation
+  // ==========================================================
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   if (!emailRegex.test(email)) {
@@ -33,15 +44,19 @@ export const register = async (
     });
   }
 
-  // Password validation
-  if (password.length < 6) {
+  // ==========================================================
+  // Password Validation
+  // ==========================================================
+  if (password.length < 8) {
     return res.status(400).json({
-      message: "Password must be at least 6 characters",
+      message: "Password must be at least 8 characters",
     });
   }
 
   try {
-    // Check if email already exists
+    // ==========================================================
+    // Check if Email Already Exists
+    // ==========================================================
     const existingUser = await User.findOne({ email });
 
     if (existingUser) {
@@ -50,10 +65,14 @@ export const register = async (
       });
     }
 
-    // Hash password
+    // ==========================================================
+    // Hash Password
+    // ==========================================================
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create user
+    // ==========================================================
+    // Create New User
+    // ==========================================================
     const user = await User.create({
       name,
       email,
@@ -61,8 +80,14 @@ export const register = async (
       role,
     });
 
+    // ==========================================================
+    // Generate JWT Token
+    // ==========================================================
+    const token = generateToken(user);
+
     return res.status(201).json({
-      data: user,
+      message: "Registration successful",
+      data: token,
     });
   } catch (error) {
     console.error(error);
@@ -72,10 +97,17 @@ export const register = async (
     });
   }
 };
-// Login
-export const login = async (req: Request, res: Response) => {
+
+// ==========================================================
+// Login User
+// Verifies credentials and returns JWT token
+// ==========================================================
+export const login = async (req: Request, res: Response): Promise<Response> => {
   const { email, password } = req.body;
 
+  // ==========================================================
+  // Required Fields Validation
+  // ==========================================================
   if (!email || !password) {
     return res.status(400).json({
       message: "Email and password are required",
@@ -83,6 +115,9 @@ export const login = async (req: Request, res: Response) => {
   }
 
   try {
+    // ==========================================================
+    // Find User by Email
+    // ==========================================================
     const user = await User.findOne({ email });
 
     if (!user) {
@@ -91,6 +126,9 @@ export const login = async (req: Request, res: Response) => {
       });
     }
 
+    // ==========================================================
+    // Compare Password
+    // ==========================================================
     const isMatch = await bcrypt.compare(password, user.password!);
 
     if (!isMatch) {
@@ -99,18 +137,15 @@ export const login = async (req: Request, res: Response) => {
       });
     }
 
-    const token = jwt.sign(
-      {
-        id: user._id,
-        role: user.role,
-      },
-      process.env.JWT_SECRET as string,
-      {
-        expiresIn: "7d",
-      },
-    );
+    // ==========================================================
+    // Generate JWT Token
+    // ==========================================================
+    const token = generateToken(user);
 
-    return res.status(200).json({ data: token });
+    return res.status(200).json({
+      message: "Login successful",
+      data: token,
+    });
   } catch (error) {
     console.error(error);
 
