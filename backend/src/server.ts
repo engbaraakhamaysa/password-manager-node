@@ -12,7 +12,7 @@ dotenv.config();
 const app = express();
 connectDB();
 
-// app.use(cors()); use the after bulid frountend
+app.use(cors()); // use the after bulid frountend
 
 // this to reed json file from body
 app.use(express.json());
