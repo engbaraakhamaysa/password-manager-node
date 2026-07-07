@@ -1,33 +1,55 @@
-import axios from "axios";
 import Header from "../../Components/Header";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { adminServices } from "../../Services/adminServices";
 
 export default function AdminDashboard() {
   //this to save data in formted to users
   const [users, setUsers] = useState([]);
+
+  const [search, setSearch] = useState("");
   //get users from the server
   useEffect(() => {
-    axios
-      .get(`http://localhost:8000/api/users`)
-      .then((response) => {
-        //save data to frmatted obj
-        const formatted = response.data.map((item) => ({
-          id: item._id,
-          name: item.name,
-          email: item.email,
-        }));
-        //save to user obj
-        setUsers(formatted);
-      })
-      .catch((err) => {
+    const fetchUsers = async () => {
+      try {
+        const data = await adminServices.getUsers();
+
+        setUsers(data);
+      } catch (err) {
         console.error("Error fetching users:", err);
         setUsers([]);
-      });
+      }
+    };
+
+    fetchUsers();
   }, []);
+
+  // const filteredUsers = useMemo(() => {
+  //   return users.filter((user) =>
+  //     user.name.toLowerCase().includes(search.toLowerCase()),
+  //   );
+  // }, [users, search]);
+
+  const filteredUsers = users.filter((user) =>
+    user.name.toLowerCase().includes(search.toLowerCase()),
+  );
 
   return (
     <div>
       <Header />
+
+      <input
+        type="text"
+        placeholder="Search users..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+      />
+
+      {filteredUsers.map((user) => (
+        <tr key={user.id}>
+          <td>{user.name}</td>
+          <td>{user.email}</td>
+        </tr>
+      ))}
       <div
         style={{
           maxWidth: "600px",

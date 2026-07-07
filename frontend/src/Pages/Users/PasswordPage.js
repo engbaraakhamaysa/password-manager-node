@@ -3,9 +3,9 @@ import axios from "axios";
 import Header from "../../Components/Header";
 import Select from "react-select";
 
-import facebookLogo from "../../assets/facebook.svg";
-import gmailLogo from "../../assets/gmail.svg";
-import instagramLogo from "../../assets/instagram.svg";
+import facebookLogo from "../../Assets/facebook.svg";
+import gmailLogo from "../../Assets/gmail.svg";
+import instagramLogo from "../../Assets/instagram.svg";
 
 const websiteOptions = [
   {
@@ -125,7 +125,7 @@ export default function Home() {
   //this fun Toggle the show pass or hide pss
   const toggleShow = (id) => {
     setPasswords(
-      passwords.map((p) => (p.id === id ? { ...p, show: !p.show } : p))
+      passwords.map((p) => (p.id === id ? { ...p, show: !p.show } : p)),
     );
   };
 

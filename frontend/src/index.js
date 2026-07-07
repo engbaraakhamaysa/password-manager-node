@@ -4,10 +4,13 @@ import { BrowserRouter } from "react-router-dom";
 import "./sytle.css";
 
 import App from "./App";
+import { UserProvider } from "./Context/UserContext";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <BrowserRouter>
-    <App />
-  </BrowserRouter>
+    <UserProvider>
+      <App />
+    </UserProvider>
+  </BrowserRouter>,
 );
