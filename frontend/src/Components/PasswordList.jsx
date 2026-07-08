@@ -1,7 +1,34 @@
-export default function PasswordList({ passwords }) {
+import { passwordService } from "../services/passwordServices";
+
+export default function PasswordList({ passwords, refreshPasswords }) {
   if (passwords.length === 0) {
     return <p>No passwords found.</p>;
   }
+
+  const handleDelete = async (id) => {
+    try {
+      await passwordService.delete(id);
+
+      await refreshPasswords();
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  const handleUpdate = async (password) => {
+    try {
+      await passwordService.update(password._id, {
+        website: "new website",
+        username: password.username,
+        password: password.password,
+        notes: password.notes,
+      });
+
+      await refreshPasswords();
+    } catch (err) {
+      console.log(err);
+    }
+  };
 
   return (
     <div>
@@ -25,8 +52,8 @@ export default function PasswordList({ passwords }) {
             <strong>Password:</strong> ********
           </p>
 
-          <button>Edit</button>
-          <button style={{ marginLeft: "10px" }}>Delete</button>
+          <button onClick={() => handleUpdate(password)}>Edit</button>
+          <button onClick={() => handleDelete(password._id)}>Delete</button>
         </div>
       ))}
     </div>

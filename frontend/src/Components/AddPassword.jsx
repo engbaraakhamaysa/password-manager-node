@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { passwordService } from "../Services/passwordServices";
+import { passwordService } from "../services/passwordServices";
 
-export default function AddPassword({ onClose }) {
+export default function AddPassword({ onClose, refreshPasswords }) {
   const [form, setForm] = useState({
     website: "",
     username: "",
@@ -13,12 +13,13 @@ export default function AddPassword({ onClose }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(form);
 
     try {
-      const res = await passwordService.create(form);
+      await passwordService.create(form);
 
-      console.log(res);
+      await refreshPasswords();
+
+      onClose();
     } catch (err) {
       console.log(err);
     }
