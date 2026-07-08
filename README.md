@@ -1,67 +1,78 @@
-# 🔐 Password Manager MERN
+# Password Manager Backend
 
-A simple password manager built using the MERN stack.
+Backend API for the Password Manager application.
 
-## 🚀 Overview
+## Tech Stack
 
-This project is a full-stack password management application developed using **React.js**, **Node.js**, **Express.js**, and **MongoDB**. It allows users to store and manage their passwords through a simple and responsive interface.
+- Node.js
+- Express.js
+- TypeScript
+- MongoDB
+- Mongoose
+- JWT Authentication
 
-The application demonstrates how a React frontend communicates with a Node.js/Express backend through REST APIs while persisting data in MongoDB.
+## Features
 
-## 🛠️ Tech Stack
+- User Authentication
+- JWT Authorization
+- User CRUD
+- REST API
+- Environment Variables Support
 
-### Frontend
+## Installation
 
-* React.js
-* JavaScript
-* CSS
+```bash
+git clone <repository-url>
+cd backend
+npm install
+```
 
-### Backend
+## Run Development Server
 
-* Node.js
-* Express.js
+```bash
+npm run dev
+```
 
-### Database
+## Build Project
 
-* MongoDB
+```bash
+npm run build
+```
 
-## ✨ Features
+## Run Production
 
-* Add new password entries
-* View saved passwords
-* Update existing passwords
-* Delete passwords
-* Responsive user interface
-* RESTful API integration
+```bash
+npm start
+```
 
-## 📂 Project Structure
+## Environment Variables
 
-```text
-password-manager-mern/
-├── client/      # React frontend
-├── server/      # Node.js & Express backend
+Create a `.env` file in the project root:
+
+```env
+PORT=5000
+MONGODB_URI=your_mongodb_uri
+JWT_SECRET=your_secret_key
+```
+
+## Project Structure
+
+```
+backend/
+│
+├── src/
+│   ├── config/
+│   ├── controllers/
+│   ├── models/
+│   ├── routes/
+│   └── server.ts
+│
+├── .env
+├── package.json
+├── tsconfig.json
 └── README.md
 ```
 
+## License
 
-## 🎯 Purpose
-
-This project was built to practice and demonstrate:
-
-* Full-Stack Development
-* REST API Development
-* MongoDB CRUD Operations
-* React State Management
-* Client-Server Communication
-
-## 📚 Learning Outcomes
-
-Through this project, I improved my understanding of:
-
-* React Components and Hooks
-* Express Routing
-* MongoDB Integration
-* CRUD Operations
-* MERN Stack Architecture
-
-
+MIT
