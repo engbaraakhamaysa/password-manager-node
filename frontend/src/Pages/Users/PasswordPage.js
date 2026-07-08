@@ -3,9 +3,9 @@ import axios from "axios";
 import Header from "../../Components/Header";
 import Select from "react-select";
 
-import facebookLogo from "../../Assets/facebook.svg";
-import gmailLogo from "../../Assets/gmail.svg";
-import instagramLogo from "../../Assets/instagram.svg";
+import facebookLogo from "../../assets/facebook.svg";
+import gmailLogo from "../../assets/gmail.svg";
+import instagramLogo from "../../assets/instagram.svg";
 
 const websiteOptions = [
   {

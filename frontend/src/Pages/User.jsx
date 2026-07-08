@@ -11,7 +11,7 @@ export default function User() {
   useEffect(() => {
     const fetchPasswords = async () => {
       try {
-        const res = await passwordService.getPasswords();
+        const res = await passwordService.get();
         setPasswords(res);
       } catch (err) {
         console.error(err);
