@@ -1,6 +1,6 @@
 import Header from "../../Components/Header";
 import { useEffect, useMemo, useState } from "react";
-import { adminServices } from "../../Services/adminServices";
+import { adminServices } from "../../services/adminServices";
 
 export default function AdminDashboard() {
   //this to save data in formted to users

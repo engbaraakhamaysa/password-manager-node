@@ -2,22 +2,21 @@ import { useEffect, useState } from "react";
 import AddPassword from "../Components/AddPassword";
 import Header from "../Components/Header";
 import PasswordList from "../Components/PasswordList";
-import { passwordService } from "../Services/passwordServices";
+import { passwordService } from "../services/passwordServices";
 
 export default function User() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [passwords, setPasswords] = useState([]);
 
+  const fetchPasswords = async () => {
+    try {
+      const res = await passwordService.get();
+      setPasswords(res);
+    } catch (err) {
+      console.error(err);
+    }
+  };
   useEffect(() => {
-    const fetchPasswords = async () => {
-      try {
-        const res = await passwordService.get();
-        setPasswords(res);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
     fetchPasswords();
   }, []);
 
@@ -43,9 +42,14 @@ export default function User() {
         Add Password
       </button>
 
-      <PasswordList passwords={passwords} />
+      <PasswordList passwords={passwords} refreshPasswords={fetchPasswords} />
 
-      {showAddModal && <AddPassword onClose={() => setShowAddModal(false)} />}
+      {showAddModal && (
+        <AddPassword
+          onClose={() => setShowAddModal(false)}
+          refreshPasswords={fetchPasswords}
+        />
+      )}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { useContext, useEffect, useRef, useState } from "react";
 import Header from "../Components/Header";
-import { authService } from "../Services/authServices";
+import { authService } from "../services/authServices";
 import { useNavigate } from "react-router-dom";
 import { UserContext } from "../Context/UserContext";
 
