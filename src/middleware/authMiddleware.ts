@@ -1,15 +1,21 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
+import { User } from "../models/User";
 
 interface JwtPayload {
   id: string;
 }
 
-export const protect = (req: Request, res: Response, next: NextFunction) => {
+export const protect = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader) {
-    return res.status(401).json({ message: "No token" });
+    res.status(401).json({ message: "No token" });
+    return;
   }
 
   const token = authHeader.startsWith("Bearer ")
@@ -17,7 +23,8 @@ export const protect = (req: Request, res: Response, next: NextFunction) => {
     : null;
 
   if (!token) {
-    return res.status(401).json({ message: "Invalid token format" });
+    res.status(401).json({ message: "Invalid token format" });
+    return;
   }
 
   try {
@@ -26,11 +33,35 @@ export const protect = (req: Request, res: Response, next: NextFunction) => {
       process.env.JWT_SECRET as string,
     ) as JwtPayload;
 
-    req.user = decoded;
+    const user = await User.findById(decoded.id);
+
+    if (!user) {
+      res.status(401).json({
+        message: "User not found",
+      });
+      return;
+    }
+
+    if (user.status === "blocked") {
+      res.status(403).json({
+        message: "Account is blocked",
+      });
+      return;
+    }
+
+    req.user = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    };
 
     next();
   } catch (error) {
     console.error(error);
-    return res.status(401).json({ message: "Invalid token" });
+
+    res.status(401).json({
+      message: "Invalid token",
+    });
   }
 };

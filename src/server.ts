@@ -1,14 +1,16 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import express, { Request, Response } from "express";
 import { connectDB } from "./config/db.js";
 import userRoutes from "./routes/user.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import passwordRoutes from "./routes/password.routes.js";
-
-import dotenv from "dotenv";
+import adminRoutes from "./routes/admin.routes.js";
 
 import cors from "cors";
 // first b.c need the user name & password mongoose
-dotenv.config();
+
 const app = express();
 connectDB();
 
@@ -27,6 +29,7 @@ app.get("/", (req: Request, res: Response) => {
 app.use("/api/users", userRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/password", passwordRoutes);
+app.use("/api/admin", adminRoutes);
 
 app.listen(process.env.PORT, () => {
   console.log(`Server running on port ${process.env.PORT}`);

@@ -6,36 +6,25 @@ import { generateToken } from "../helpers/generateToken";
 
 // ==========================================================
 // Register User
-// Creates a new user account
-// Returns JWT token after successful registration
 // ==========================================================
 export const register = async (
   req: Request,
   res: Response,
 ): Promise<Response> => {
-  const { name, email, password, role } = req.body;
+  const { name, email, password } = req.body;
 
-  // ==========================================================
-  // Required Fields Validation
-  // ==========================================================
   if (!name || !email || !password) {
     return res.status(400).json({
       message: "Name, email and password are required",
     });
   }
 
-  // ==========================================================
-  // Name Validation
-  // ==========================================================
   if (name.trim().length < 3) {
     return res.status(400).json({
       message: "Name must be at least 3 characters",
     });
   }
 
-  // ==========================================================
-  // Email Validation
-  // ==========================================================
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   if (!emailRegex.test(email)) {
@@ -44,9 +33,6 @@ export const register = async (
     });
   }
 
-  // ==========================================================
-  // Password Validation
-  // ==========================================================
   if (password.length < 8) {
     return res.status(400).json({
       message: "Password must be at least 8 characters",
@@ -54,10 +40,9 @@ export const register = async (
   }
 
   try {
-    // ==========================================================
-    // Check if Email Already Exists
-    // ==========================================================
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({
+      email,
+    });
 
     if (existingUser) {
       return res.status(409).json({
@@ -65,24 +50,15 @@ export const register = async (
       });
     }
 
-    // ==========================================================
-    // Hash Password
-    // ==========================================================
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // ==========================================================
-    // Create New User
-    // ==========================================================
     const user = await User.create({
       name,
       email,
       password: hashedPassword,
-      role,
+      role: "user",
     });
 
-    // ==========================================================
-    // Generate JWT Token
-    // ==========================================================
     const token = generateToken(user);
 
     return res.status(201).json({
@@ -100,14 +76,10 @@ export const register = async (
 
 // ==========================================================
 // Login User
-// Verifies credentials and returns JWT token
 // ==========================================================
 export const login = async (req: Request, res: Response): Promise<Response> => {
   const { email, password } = req.body;
 
-  // ==========================================================
-  // Required Fields Validation
-  // ==========================================================
   if (!email || !password) {
     return res.status(400).json({
       message: "Email and password are required",
@@ -115,10 +87,9 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
   }
 
   try {
-    // ==========================================================
-    // Find User by Email
-    // ==========================================================
-    const user = await User.findOne({ email });
+    const user = await User.findOne({
+      email,
+    });
 
     if (!user) {
       return res.status(404).json({
@@ -126,10 +97,14 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
       });
     }
 
-    // ==========================================================
-    // Compare Password
-    // ==========================================================
-    const isMatch = await bcrypt.compare(password, user.password!);
+    // Check if account is blocked
+    if (user.status === "blocked") {
+      return res.status(403).json({
+        message: "Your account has been blocked",
+      });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
       return res.status(401).json({
@@ -137,9 +112,6 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
       });
     }
 
-    // ==========================================================
-    // Generate JWT Token
-    // ==========================================================
     const token = generateToken(user);
 
     return res.status(200).json({
