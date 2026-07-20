@@ -1,15 +1,15 @@
 import { Request, Response } from "express";
 import { Password } from "../models/Passoerd";
 import { CreatePasswordBody } from "../types/create.types";
+import { encrypt, decrypt } from "../utils/encryption";
 
 // Create Password
 export const createPassword = async (
   req: Request<{}, {}, CreatePasswordBody>,
   res: Response,
-) => {
+): Promise<Response> => {
   const { website, username, password, notes } = req.body;
 
-  // Validate required fields
   if (!website || !username || !password) {
     return res.status(400).json({
       message: "Website, username and password are required",
@@ -21,7 +21,7 @@ export const createPassword = async (
       userId: req.user.id,
       website,
       username,
-      password,
+      password: encrypt(password),
       notes,
     });
 
@@ -38,14 +38,22 @@ export const createPassword = async (
 };
 
 // Get All Passwords
-export const getPasswords = async (req: Request, res: Response) => {
+export const getPasswords = async (
+  req: Request,
+  res: Response,
+): Promise<Response> => {
   try {
     const passwords = await Password.find({
       userId: req.user.id,
     });
 
+    const decryptedPasswords = passwords.map((item) => ({
+      ...item.toObject(),
+      password: decrypt(item.password),
+    }));
+
     return res.status(200).json({
-      data: passwords,
+      data: decryptedPasswords,
     });
   } catch (error) {
     console.error(error);
@@ -57,23 +65,34 @@ export const getPasswords = async (req: Request, res: Response) => {
 };
 
 // Get Password By ID
-export const getPasswordById = async (req: Request, res: Response) => {
+export const getPasswordById = async (
+  req: Request,
+  res: Response,
+): Promise<Response> => {
   try {
     const password = await Password.findOne({
-      //Multi-layer Authorization
       _id: req.params.id,
       userId: req.user.id,
     });
 
     if (!password) {
-      return res.status(404).json({ message: "Password not found" });
+      return res.status(404).json({
+        message: "Password not found",
+      });
     }
 
-    return res.status(200).json({ data: password });
+    return res.status(200).json({
+      data: {
+        ...password.toObject(),
+        password: decrypt(password.password),
+      },
+    });
   } catch (error) {
     console.error(error);
 
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({
+      message: "Internal server error",
+    });
   }
 };
 
@@ -81,7 +100,7 @@ export const getPasswordById = async (req: Request, res: Response) => {
 export const updatePassword = async (
   req: Request<{ id: string }, {}, UpdatePasswordBody>,
   res: Response,
-) => {
+): Promise<Response> => {
   const { website, username, password, notes } = req.body;
 
   try {
@@ -93,7 +112,7 @@ export const updatePassword = async (
       {
         ...(website && { website }),
         ...(username && { username }),
-        ...(password && { password }),
+        ...(password && { password: encrypt(password) }),
         ...(notes && { notes }),
       },
       {
@@ -102,14 +121,23 @@ export const updatePassword = async (
     );
 
     if (!result) {
-      return res.status(404).json({ message: "Password not found" });
+      return res.status(404).json({
+        message: "Password not found",
+      });
     }
 
-    return res.status(200).json({ data: result });
+    return res.status(200).json({
+      data: {
+        ...result.toObject(),
+        password: decrypt(result.password),
+      },
+    });
   } catch (error) {
     console.error(error);
 
-    return res.status(500).json({ message: "Interanl server error" });
+    return res.status(500).json({
+      message: "Internal server error",
+    });
   }
 };
 
@@ -117,7 +145,7 @@ export const updatePassword = async (
 export const deletePassword = async (
   req: Request<{ id: string }>,
   res: Response,
-) => {
+): Promise<Response> => {
   try {
     const password = await Password.findOneAndDelete({
       _id: req.params.id,
@@ -125,10 +153,14 @@ export const deletePassword = async (
     });
 
     if (!password) {
-      return res.status(404).json({ message: "Password not found" });
+      return res.status(404).json({
+        message: "Password not found",
+      });
     }
 
-    return res.status(200).json({ message: "Password deleted successfully" });
+    return res.status(200).json({
+      message: "Password deleted successfully",
+    });
   } catch (error) {
     console.error(error);
 

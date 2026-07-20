@@ -5,14 +5,14 @@ const userSchema = new Schema<IUser>(
   {
     name: {
       type: String,
-      required: [true, "Name is required"],
-      minlength: [3, "Name must be at least 3 characters"],
+      required: true,
+      minlength: 3,
       trim: true,
     },
 
     email: {
       type: String,
-      required: [true, "Email is required"],
+      required: true,
       unique: true,
       lowercase: true,
       trim: true,
@@ -20,8 +20,8 @@ const userSchema = new Schema<IUser>(
 
     password: {
       type: String,
-      required: [true, "Password is required"],
-      minlength: [6, "Password must be at least 6 characters"],
+      required: true,
+      minlength: 6,
     },
 
     role: {
@@ -29,25 +29,21 @@ const userSchema = new Schema<IUser>(
       enum: ["user", "admin"],
       default: "user",
     },
+
+    status: {
+      type: String,
+      enum: ["active", "blocked"],
+      default: "active",
+    },
   },
   {
     timestamps: true,
   },
 );
-
-// userSchema.set("toJSON", {
-//   transform: function (doc, ret) {
-//     delete ret.password;
-//     return ret;
-//   },
-// });
-
 userSchema.set("toJSON", {
   transform: function (doc, ret) {
     const obj = ret as Partial<IUser>;
-
     delete obj.password;
-
     return obj;
   },
 });

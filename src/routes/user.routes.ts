@@ -1,23 +1,15 @@
 import { Router } from "express";
 import {
-  getUsers,
-  getUserById,
-  updateUser,
-  deleteUser,
+  getProfile,
+  updateProfile,
+  changePassword,
 } from "../controllers/users.controller";
+import { protect } from "../middleware/authMiddleware";
 
 const router = Router();
 
-router.get("/", getUsers);
-
-router.get("/:id", getUserById);
-
-router.put("/:id", updateUser);
-
-router.delete("/:id", deleteUser);
-
-router.get("/", (req, res) => {
-  res.json("User API");
-});
+router.get("/profile", protect, getProfile);
+router.put("/profile", protect, updateProfile);
+router.patch("/change-password", protect, changePassword);
 
 export default router;

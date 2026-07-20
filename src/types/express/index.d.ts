@@ -5,6 +5,9 @@ declare global {
     interface Request {
       user: {
         id: Types.ObjectId | string;
+        name: string;
+        email: string;
+        role: "user" | "admin";
       };
     }
   }
