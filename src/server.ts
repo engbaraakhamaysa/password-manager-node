@@ -1,36 +1,49 @@
+// ==========================================================
+// Application Server Entry Point
+// ==========================================================
+// Responsible for:
+// - Loading environment variables
+// - Connecting database
+// - Starting Express server
+// ==========================================================
+
 import dotenv from "dotenv";
+
 dotenv.config();
 
-import express, { Request, Response } from "express";
+import app from "./app.js";
 import { connectDB } from "./config/db.js";
-import userRoutes from "./routes/user.routes.js";
-import authRoutes from "./routes/auth.routes.js";
-import passwordRoutes from "./routes/password.routes.js";
-import adminRoutes from "./routes/admin.routes.js";
 
-import cors from "cors";
-// first b.c need the user name & password mongoose
+// ==========================================================
+// Server Configuration
+// ==========================================================
 
-const app = express();
-connectDB();
+const PORT = process.env.PORT || 5000;
 
-app.use(cors()); // use the after bulid frountend
+// ==========================================================
+// Start Application
+// ==========================================================
 
-// this to reed json file from body
-app.use(express.json());
+const startServer = async (): Promise<void> => {
+  try {
+    // Connect database before starting server
 
-// Test Endpoint
-app.get("/", (req: Request, res: Response) => {
-  res.json({
-    message: "Backend is running ",
-  });
-});
+    await connectDB();
 
-app.use("/api/users", userRoutes);
-app.use("/api/auth", authRoutes);
-app.use("/api/password", passwordRoutes);
-app.use("/api/admin", adminRoutes);
+    // Start Express server
 
-app.listen(process.env.PORT, () => {
-  console.log(`Server running on port ${process.env.PORT}`);
-});
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error("Server startup failed:", error);
+
+    process.exit(1);
+  }
+};
+
+// ==========================================================
+// Initialize Server
+// ==========================================================
+
+startServer();

@@ -1,9 +1,29 @@
+// ==========================================================
+// User Controller
+// ==========================================================
+// Responsible for:
+// - Managing users (Admin)
+// - Managing user profile
+// - Changing passwords
+//
+// Authentication is handled by protect middleware.
+// Authorization is handled by admin middleware.
+// ==========================================================
+
 import { Request, Response } from "express";
-import { User } from "../models/User";
+
 import mongoose from "mongoose";
+
 import bcrypt from "bcryptjs";
 
-//get all users endpoint
+import { User, UserRole, UserStatus } from "../models/User.js";
+
+// ==========================================================
+// Get All Users
+// ==========================================================
+// Admin only
+// ==========================================================
+
 export const getUsers = async (
   _req: Request,
   res: Response,
@@ -15,14 +35,20 @@ export const getUsers = async (
       data: users,
     });
   } catch (error) {
-    console.log(error);
-    return res.status(500).send({
-      message: "error in server",
+    console.error("Get users error:", error);
+
+    return res.status(500).json({
+      message: "Internal server error",
     });
   }
 };
 
-//get User by Id
+// ==========================================================
+// Get User By ID
+// ==========================================================
+// Admin only
+// ==========================================================
+
 export const getUserById = async (
   req: Request<{ id: string }>,
   res: Response,
@@ -47,18 +73,27 @@ export const getUserById = async (
     return res.status(200).json({
       data: user,
     });
-  } catch (error: unknown) {
-    console.log(error);
-    return res.status(500).json({ message: "Server error" });
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      message: "Internal server error",
+    });
   }
 };
 
-//update users
+// ==========================================================
+// Update User
+// ==========================================================
+// Admin only
+// ==========================================================
+
 export const updateUser = async (
   req: Request<{ id: string }>,
   res: Response,
-) => {
+): Promise<Response> => {
   const { id } = req.params;
+
   const { name, email, role } = req.body;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -67,84 +102,24 @@ export const updateUser = async (
     });
   }
 
-  if (name && name.length < 3) {
-    return res.status(400).json({
-      message: "Name must be at least 3 characters",
-    });
-  }
-
-  if (email && !email.includes("@")) {
-    return res.status(400).json({
-      message: "Invalid email",
-    });
-  }
-
   try {
     const user = await User.findByIdAndUpdate(
       id,
+
       {
-        name,
-        email,
-        role,
+        ...(name && { name }),
+
+        ...(email && {
+          email: email.toLowerCase(),
+        }),
+
+        ...(role && { role }),
       },
+
       {
         new: true,
       },
     );
-
-    if (!user) {
-      return res.status(404).json({
-        message: "User not found",
-      });
-    }
-
-    return res.status(200).json({
-      data: user,
-    });
-  } catch (error) {
-    console.log(error);
-
-    return res.status(500).json({
-      message: "Error server",
-    });
-  }
-};
-
-//Delete User
-
-export const deleteUser = async (
-  req: Request<{ id: string }>,
-  res: Response,
-) => {
-  const { id } = req.params;
-
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    return res.status(400).json({
-      message: "Invalid user id",
-    });
-  }
-
-  try {
-    const user = await User.findByIdAndDelete(id);
-
-    if (!user) {
-      return res.status(404).json({
-        message: "User not found",
-      });
-    }
-
-    return res.status(200).json({ message: "User deleted" });
-  } catch {
-    return res.status(500).json({ message: "Error Server" });
-  }
-};
-
-export const getProfile = async (
-  req: Request,
-  res: Response,
-): Promise<Response> => {
-  try {
-    const user = await User.findById(req.user.id);
 
     if (!user) {
       return res.status(404).json({
@@ -164,6 +139,78 @@ export const getProfile = async (
   }
 };
 
+// ==========================================================
+// Delete User
+// ==========================================================
+// Admin only
+// ==========================================================
+
+export const deleteUser = async (
+  req: Request<{ id: string }>,
+  res: Response,
+): Promise<Response> => {
+  const { id } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({
+      message: "Invalid user id",
+    });
+  }
+
+  try {
+    const user = await User.findByIdAndDelete(id);
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    return res.status(200).json({
+      message: "User deleted successfully",
+    });
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+};
+
+// ==========================================================
+// Get Current User Profile
+// ==========================================================
+
+export const getProfile = async (
+  req: Request,
+  res: Response,
+): Promise<Response> => {
+  try {
+    const user = await User.findById(req.user!.id);
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    return res.status(200).json({
+      data: user,
+    });
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+};
+
+// ==========================================================
+// Update Current User Profile
+// ==========================================================
+
 export const updateProfile = async (
   req: Request,
   res: Response,
@@ -171,7 +218,7 @@ export const updateProfile = async (
   const { name, email } = req.body;
 
   try {
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(req.user!.id);
 
     if (!user) {
       return res.status(404).json({
@@ -190,32 +237,28 @@ export const updateProfile = async (
     }
 
     if (email) {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const emailExists = await User.findOne({
+        email: email.toLowerCase(),
 
-      if (!emailRegex.test(email)) {
-        return res.status(400).json({
-          message: "Invalid email format",
-        });
-      }
-
-      const existingUser = await User.findOne({
-        email,
-        _id: { $ne: req.user.id },
+        _id: {
+          $ne: req.user!.id,
+        },
       });
 
-      if (existingUser) {
+      if (emailExists) {
         return res.status(409).json({
           message: "Email already exists",
         });
       }
 
-      user.email = email;
+      user.email = email.toLowerCase();
     }
 
     await user.save();
 
     return res.status(200).json({
       message: "Profile updated successfully",
+
       data: user,
     });
   } catch (error) {
@@ -227,14 +270,19 @@ export const updateProfile = async (
   }
 };
 
+// ==========================================================
+// Update User Status
+// ==========================================================
+// Admin only
+// ==========================================================
+
 export const updateUserStatus = async (
   req: Request<{ id: string }>,
   res: Response,
 ): Promise<Response> => {
   const { status } = req.body;
-  const { id } = req.params;
 
-  if (!["active", "blocked"].includes(status)) {
+  if (!Object.values(UserStatus).includes(status)) {
     return res.status(400).json({
       message: "Invalid status",
     });
@@ -242,10 +290,12 @@ export const updateUserStatus = async (
 
   try {
     const user = await User.findByIdAndUpdate(
-      id,
+      req.params.id,
+
       {
         status,
       },
+
       {
         new: true,
       },
@@ -259,6 +309,7 @@ export const updateUserStatus = async (
 
     return res.status(200).json({
       message: "User status updated",
+
       data: user,
     });
   } catch (error) {
@@ -269,6 +320,10 @@ export const updateUserStatus = async (
     });
   }
 };
+
+// ==========================================================
+// Change Password
+// ==========================================================
 
 export const changePassword = async (
   req: Request,
@@ -289,7 +344,7 @@ export const changePassword = async (
   }
 
   try {
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(req.user!.id);
 
     if (!user) {
       return res.status(404).json({
@@ -297,17 +352,23 @@ export const changePassword = async (
       });
     }
 
-    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    const matched = await bcrypt.compare(
+      currentPassword,
 
-    if (!isMatch) {
+      user.password,
+    );
+
+    if (!matched) {
       return res.status(401).json({
         message: "Current password is incorrect",
       });
     }
 
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = await bcrypt.hash(
+      newPassword,
 
-    user.password = hashedPassword;
+      10,
+    );
 
     await user.save();
 
