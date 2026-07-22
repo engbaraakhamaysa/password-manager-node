@@ -13,18 +13,16 @@
 
 import { User } from "../models/User.js";
 
+import { IUser } from "../types/user.types.js";
 import { UpdateUserBody, UserStatus } from "../types/admin.type.js";
 
 // ==========================================================
 // Get All Users
 // ==========================================================
 // Retrieves all users from database.
-//
-// Used by:
-// Admin dashboard
 // ==========================================================
 
-export const getAllUsers = async () => {
+export const getAllUsers = async (): Promise<IUser[]> => {
   const users = await User.find();
 
   return users;
@@ -33,10 +31,10 @@ export const getAllUsers = async () => {
 // ==========================================================
 // Get User By ID
 // ==========================================================
-// Retrieves a single user using user id.
+// Retrieves single user using id.
 // ==========================================================
 
-export const getUserByIdService = async (id: string) => {
+export const getUserByIdService = async (id: string): Promise<IUser | null> => {
   const user = await User.findById(id);
 
   return user;
@@ -53,7 +51,10 @@ export const getUserByIdService = async (id: string) => {
 // - role
 // ==========================================================
 
-export const updateUserService = async (id: string, data: UpdateUserBody) => {
+export const updateUserService = async (
+  id: string,
+  data: UpdateUserBody,
+): Promise<IUser | null> => {
   const user = await User.findByIdAndUpdate(
     id,
 
@@ -82,10 +83,10 @@ export const updateUserService = async (id: string, data: UpdateUserBody) => {
 // ==========================================================
 // Delete User
 // ==========================================================
-// Permanently deletes user from database.
+// Permanently deletes user.
 // ==========================================================
 
-export const deleteUserService = async (id: string) => {
+export const deleteUserService = async (id: string): Promise<IUser | null> => {
   const user = await User.findByIdAndDelete(id);
 
   return user;
@@ -96,7 +97,7 @@ export const deleteUserService = async (id: string) => {
 // ==========================================================
 // Updates user account status.
 //
-// Available statuses:
+// Available:
 // - active
 // - blocked
 // ==========================================================
@@ -104,7 +105,7 @@ export const deleteUserService = async (id: string) => {
 export const updateUserStatusService = async (
   id: string,
   status: UserStatus,
-) => {
+): Promise<IUser | null> => {
   const user = await User.findByIdAndUpdate(
     id,
 

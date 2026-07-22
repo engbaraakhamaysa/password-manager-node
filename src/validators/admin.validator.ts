@@ -7,6 +7,8 @@
 // Only checks request data.
 // ==========================================================
 
+import { UserRole, UserStatus } from "../types/admin.type.js";
+
 // ==========================================================
 // Validate MongoDB ObjectId
 // ==========================================================
@@ -18,6 +20,7 @@ export const validateUserId = (data: { id: string }): string | null => {
 
   return null;
 };
+
 // ==========================================================
 // Validate Update User Data
 // ==========================================================
@@ -29,10 +32,8 @@ export const validateUserId = (data: { id: string }): string | null => {
 
 export const validateUpdateUser = (data: {
   name?: string;
-
   email?: string;
-
-  role?: "user" | "admin";
+  role?: UserRole;
 }): string | null => {
   if (data.name && data.name.trim().length < 3) {
     return "Name must be at least 3 characters";
@@ -56,9 +57,13 @@ export const validateUpdateUser = (data: {
 // ==========================================================
 // Validate User Status
 // ==========================================================
+// Checks account status value
+// ==========================================================
 
-export const validateUserStatus = (status: string): string | null => {
-  if (!["active", "blocked"].includes(status)) {
+export const validateUserStatus = (data: {
+  status: UserStatus;
+}): string | null => {
+  if (!["active", "blocked"].includes(data.status)) {
     return "Invalid status";
   }
 

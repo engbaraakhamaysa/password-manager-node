@@ -6,6 +6,7 @@
 
 // ==========================================================
 // User Role Type
+// ==========================================================
 // Defines available user permissions
 // ==========================================================
 
@@ -13,17 +14,29 @@ export type UserRole = "user" | "admin";
 
 // ==========================================================
 // User Status Type
-// Defines account availability status
+// ==========================================================
+// Defines account status
 // ==========================================================
 
 export type UserStatus = "active" | "blocked";
 
 // ==========================================================
-// Update User Request Body
-// Used when admin updates user information
+// User ID Params
+// ==========================================================
+// Used for routes containing user id
 //
-// Fields are optional because admin can update
-// one or more properties only.
+// Example:
+// /users/:id
+// ==========================================================
+
+export interface UserIdParams {
+  id: string;
+}
+
+// ==========================================================
+// Update User Request Body
+// ==========================================================
+// Used when admin updates user information
 // ==========================================================
 
 export interface UpdateUserBody {
@@ -34,7 +47,8 @@ export interface UpdateUserBody {
 
 // ==========================================================
 // Update User Status Request Body
-// Used when admin blocks or activates user account
+// ==========================================================
+// Used when admin changes account status
 // ==========================================================
 
 export interface UpdateUserStatusBody {
