@@ -1,17 +1,31 @@
+// ==========================================================
+// Authentication Controller
+// ==========================================================
+// Responsible for:
+// - Register new users
+// - Authenticate existing users
+// - Generate JWT tokens
+// ==========================================================
+
 import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
+import { User, UserRole, UserStatus } from "../models/User.js";
 
-import { User } from "../models/User";
-import { generateToken } from "../helpers/generateToken";
+import { generateToken } from "../helpers/generateToken.js";
 
 // ==========================================================
 // Register User
 // ==========================================================
+
 export const register = async (
   req: Request,
   res: Response,
 ): Promise<Response> => {
   const { name, email, password } = req.body;
+
+  // ========================================================
+  // Validate Request Data
+  // ========================================================
 
   if (!name || !email || !password) {
     return res.status(400).json({
@@ -25,14 +39,6 @@ export const register = async (
     });
   }
 
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-  if (!emailRegex.test(email)) {
-    return res.status(400).json({
-      message: "Invalid email format",
-    });
-  }
-
   if (password.length < 8) {
     return res.status(400).json({
       message: "Password must be at least 8 characters",
@@ -40,8 +46,12 @@ export const register = async (
   }
 
   try {
+    // ======================================================
+    // Check Existing User
+    // ======================================================
+
     const existingUser = await User.findOne({
-      email,
+      email: email.toLowerCase(),
     });
 
     if (existingUser) {
@@ -50,23 +60,41 @@ export const register = async (
       });
     }
 
+    // ======================================================
+    // Hash Password
+    // ======================================================
+
     const hashedPassword = await bcrypt.hash(password, 10);
+
+    // ======================================================
+    // Create User
+    // ======================================================
 
     const user = await User.create({
       name,
+
       email,
+
       password: hashedPassword,
-      role: "user",
+
+      role: UserRole.USER,
     });
+
+    // ======================================================
+    // Generate Token
+    // ======================================================
 
     const token = generateToken(user);
 
     return res.status(201).json({
       message: "Registration successful",
-      data: token,
+
+      data: {
+        token,
+      },
     });
   } catch (error) {
-    console.error(error);
+    console.error("Register error:", error);
 
     return res.status(500).json({
       message: "Internal server error",
@@ -77,6 +105,7 @@ export const register = async (
 // ==========================================================
 // Login User
 // ==========================================================
+
 export const login = async (req: Request, res: Response): Promise<Response> => {
   const { email, password } = req.body;
 
@@ -88,23 +117,26 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
 
   try {
     const user = await User.findOne({
-      email,
+      email: email.toLowerCase(),
     });
 
     if (!user) {
-      return res.status(404).json({
-        message: "User not found",
+      return res.status(401).json({
+        message: "Invalid email or password",
       });
     }
 
-    // Check if account is blocked
-    if (user.status === "blocked") {
+    if (user.status === UserStatus.BLOCKED) {
       return res.status(403).json({
         message: "Your account has been blocked",
       });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
+    const isMatch = await bcrypt.compare(
+      password,
+
+      user.password,
+    );
 
     if (!isMatch) {
       return res.status(401).json({
@@ -116,10 +148,13 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
 
     return res.status(200).json({
       message: "Login successful",
-      data: token,
+
+      data: {
+        token,
+      },
     });
   } catch (error) {
-    console.error(error);
+    console.error("Login error:", error);
 
     return res.status(500).json({
       message: "Internal server error",

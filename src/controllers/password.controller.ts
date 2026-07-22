@@ -1,14 +1,38 @@
-import { Request, Response } from "express";
-import { Password } from "../models/Passoerd";
-import { CreatePasswordBody } from "../types/create.types";
-import { encrypt, decrypt } from "../utils/encryption";
+// ==========================================================
+// Password Controller
+// ==========================================================
+// Responsible for:
+// - Creating saved passwords
+// - Retrieving user passwords
+// - Updating passwords
+// - Deleting passwords
+//
+// Security:
+// Password values are encrypted before saving to database.
+// ==========================================================
 
+import { Request, Response } from "express";
+
+import { Password } from "../models/Passoerd";
+
+import { CreatePasswordBody } from "../types/create.types.js";
+import { UpdatePasswordBody } from "../types/update.type";
+
+import { encrypt, decrypt } from "../utils/encryption.js";
+
+// ==========================================================
 // Create Password
+// ==========================================================
+
 export const createPassword = async (
   req: Request<{}, {}, CreatePasswordBody>,
   res: Response,
 ): Promise<Response> => {
   const { website, username, password, notes } = req.body;
+
+  // ========================================================
+  // Validate Request Data
+  // ========================================================
 
   if (!website || !username || !password) {
     return res.status(400).json({
@@ -17,11 +41,19 @@ export const createPassword = async (
   }
 
   try {
+    // ======================================================
+    // Create Encrypted Password
+    // ======================================================
+
     const newPassword = await Password.create({
-      userId: req.user.id,
+      userId: req.user!.id,
+
       website,
+
       username,
+
       password: encrypt(password),
+
       notes,
     });
 
@@ -29,7 +61,7 @@ export const createPassword = async (
       data: newPassword,
     });
   } catch (error) {
-    console.error(error);
+    console.error("Create password error:", error);
 
     return res.status(500).json({
       message: "Internal server error",
@@ -37,18 +69,24 @@ export const createPassword = async (
   }
 };
 
+// ==========================================================
 // Get All Passwords
+// ==========================================================
+
 export const getPasswords = async (
   req: Request,
   res: Response,
 ): Promise<Response> => {
   try {
     const passwords = await Password.find({
-      userId: req.user.id,
+      userId: req.user!.id,
     });
+
+    // Decrypt passwords before sending response
 
     const decryptedPasswords = passwords.map((item) => ({
       ...item.toObject(),
+
       password: decrypt(item.password),
     }));
 
@@ -56,7 +94,7 @@ export const getPasswords = async (
       data: decryptedPasswords,
     });
   } catch (error) {
-    console.error(error);
+    console.error("Get passwords error:", error);
 
     return res.status(500).json({
       message: "Internal server error",
@@ -64,7 +102,10 @@ export const getPasswords = async (
   }
 };
 
+// ==========================================================
 // Get Password By ID
+// ==========================================================
+
 export const getPasswordById = async (
   req: Request,
   res: Response,
@@ -72,7 +113,8 @@ export const getPasswordById = async (
   try {
     const password = await Password.findOne({
       _id: req.params.id,
-      userId: req.user.id,
+
+      userId: req.user!.id,
     });
 
     if (!password) {
@@ -84,11 +126,12 @@ export const getPasswordById = async (
     return res.status(200).json({
       data: {
         ...password.toObject(),
+
         password: decrypt(password.password),
       },
     });
   } catch (error) {
-    console.error(error);
+    console.error("Get password error:", error);
 
     return res.status(500).json({
       message: "Internal server error",
@@ -96,7 +139,10 @@ export const getPasswordById = async (
   }
 };
 
+// ==========================================================
 // Update Password
+// ==========================================================
+
 export const updatePassword = async (
   req: Request<{ id: string }, {}, UpdatePasswordBody>,
   res: Response,
@@ -104,23 +150,37 @@ export const updatePassword = async (
   const { website, username, password, notes } = req.body;
 
   try {
-    const result = await Password.findOneAndUpdate(
+    const updatedPassword = await Password.findOneAndUpdate(
       {
         _id: req.params.id,
-        userId: req.user.id,
+
+        userId: req.user!.id,
       },
+
       {
-        ...(website && { website }),
-        ...(username && { username }),
-        ...(password && { password: encrypt(password) }),
-        ...(notes && { notes }),
+        ...(website && {
+          website,
+        }),
+
+        ...(username && {
+          username,
+        }),
+
+        ...(password && {
+          password: encrypt(password),
+        }),
+
+        ...(notes !== undefined && {
+          notes,
+        }),
       },
+
       {
         new: true,
       },
     );
 
-    if (!result) {
+    if (!updatedPassword) {
       return res.status(404).json({
         message: "Password not found",
       });
@@ -128,12 +188,13 @@ export const updatePassword = async (
 
     return res.status(200).json({
       data: {
-        ...result.toObject(),
-        password: decrypt(result.password),
+        ...updatedPassword.toObject(),
+
+        password: decrypt(updatedPassword.password),
       },
     });
   } catch (error) {
-    console.error(error);
+    console.error("Update password error:", error);
 
     return res.status(500).json({
       message: "Internal server error",
@@ -141,7 +202,10 @@ export const updatePassword = async (
   }
 };
 
+// ==========================================================
 // Delete Password
+// ==========================================================
+
 export const deletePassword = async (
   req: Request<{ id: string }>,
   res: Response,
@@ -149,7 +213,8 @@ export const deletePassword = async (
   try {
     const password = await Password.findOneAndDelete({
       _id: req.params.id,
-      userId: req.user.id,
+
+      userId: req.user!.id,
     });
 
     if (!password) {
@@ -162,7 +227,7 @@ export const deletePassword = async (
       message: "Password deleted successfully",
     });
   } catch (error) {
-    console.error(error);
+    console.error("Delete password error:", error);
 
     return res.status(500).json({
       message: "Internal server error",

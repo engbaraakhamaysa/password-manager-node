@@ -1,4 +1,4 @@
-interface UpdatePasswordBody {
+export interface UpdatePasswordBody {
   website?: string;
   username?: string;
   password?: string;
