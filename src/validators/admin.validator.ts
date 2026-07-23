@@ -1,20 +1,50 @@
 // ==========================================================
 // Admin Validators
 // ==========================================================
-// Responsible for validating admin operations input.
+// Responsible for validating admin operation inputs.
 //
-// Does not communicate with database.
-// Only checks request data.
+// Responsibilities:
+// - Validate user IDs
+// - Validate user update data
+// - Validate user account status
+//
+// Notes:
+// - Does not communicate with the database.
+// - Does not modify request data.
+// - Returns a validation error message when invalid.
+// - Returns null when validation succeeds.
 // ==========================================================
 
-import { UserRole, UserStatus } from "../types/admin.type.js";
+import {
+  UserIdParams,
+  UpdateUserBody,
+  UpdateUserStatusBody,
+} from "../types/admin.type.js";
 
 // ==========================================================
 // Validate MongoDB ObjectId
 // ==========================================================
+// Validates request params for routes containing:
+//
+// /users/:id
+//
+// Example:
+// {
+//   id: "507f1f77bcf86cd799439011"
+// }
+// ==========================================================
 
-export const validateUserId = (data: { id: string }): string | null => {
-  if (!/^[0-9a-fA-F]{24}$/.test(data.id)) {
+export const validateUserId = (data: unknown): string | null => {
+  // Ensure data is an object
+  if (typeof data !== "object" || data === null) {
+    return "Invalid user id";
+  }
+
+  // Convert unknown data into a record
+  const params = data as UserIdParams;
+
+  // Validate MongoDB ObjectId format
+  if (!/^[0-9a-fA-F]{24}$/.test(params.id)) {
     return "Invalid user id";
   }
 
@@ -25,30 +55,62 @@ export const validateUserId = (data: { id: string }): string | null => {
 // Validate Update User Data
 // ==========================================================
 // Validates:
+//
 // - name
 // - email
 // - role
+//
+// All fields are optional because the admin can update
+// one or more user properties.
 // ==========================================================
 
-export const validateUpdateUser = (data: {
-  name?: string;
-  email?: string;
-  role?: UserRole;
-}): string | null => {
-  if (data.name && data.name.trim().length < 3) {
-    return "Name must be at least 3 characters";
+export const validateUpdateUser = (data: unknown): string | null => {
+  // Ensure data is an object
+  if (typeof data !== "object" || data === null) {
+    return "Invalid request body";
   }
 
-  if (data.email) {
+  // Convert unknown data into typed request body
+  const userData = data as UpdateUserBody;
+
+  // ========================================================
+  // Validate Name
+  // ========================================================
+
+  if (userData.name !== undefined) {
+    if (typeof userData.name !== "string") {
+      return "Name must be a string";
+    }
+
+    if (userData.name.trim().length < 3) {
+      return "Name must be at least 3 characters";
+    }
+  }
+
+  // ========================================================
+  // Validate Email
+  // ========================================================
+
+  if (userData.email !== undefined) {
+    if (typeof userData.email !== "string") {
+      return "Email must be a string";
+    }
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    if (!emailRegex.test(data.email)) {
+    if (!emailRegex.test(userData.email)) {
       return "Invalid email format";
     }
   }
 
-  if (data.role && !["user", "admin"].includes(data.role)) {
-    return "Invalid role";
+  // ========================================================
+  // Validate Role
+  // ========================================================
+
+  if (userData.role !== undefined) {
+    if (userData.role !== "user" && userData.role !== "admin") {
+      return "Invalid role";
+    }
   }
 
   return null;
@@ -57,13 +119,27 @@ export const validateUpdateUser = (data: {
 // ==========================================================
 // Validate User Status
 // ==========================================================
-// Checks account status value
+// Validates account status.
+//
+// Allowed values:
+// - active
+// - blocked
 // ==========================================================
 
-export const validateUserStatus = (data: {
-  status: UserStatus;
-}): string | null => {
-  if (!["active", "blocked"].includes(data.status)) {
+export const validateUserStatus = (data: unknown): string | null => {
+  // Ensure data is an object
+  if (typeof data !== "object" || data === null) {
+    return "Invalid request body";
+  }
+
+  // Convert unknown data into typed request body
+  const statusData = data as UpdateUserStatusBody;
+
+  // ========================================================
+  // Validate Status
+  // ========================================================
+
+  if (statusData.status !== "active" && statusData.status !== "blocked") {
     return "Invalid status";
   }
 

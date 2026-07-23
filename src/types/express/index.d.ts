@@ -3,7 +3,7 @@
 // ==========================================================
 // Extends Express Request object to include authenticated user.
 //
-// This property is added by:
+// The `user` property is added by:
 // - protect middleware
 //
 // Example:
@@ -11,18 +11,21 @@
 // req.user.role
 // ==========================================================
 
-import { Types } from "mongoose";
-
 declare global {
   namespace Express {
     interface Request {
       user?: {
-        id: Types.ObjectId | string;
+        // User ID extracted from the JWT token.
+        // Stored and handled as a string across the application.
+        id: string;
 
+        // Authenticated user's name.
         name: string;
 
+        // Authenticated user's email.
         email: string;
 
+        // Authenticated user's role.
         role: "user" | "admin";
       };
     }
